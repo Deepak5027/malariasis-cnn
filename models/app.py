@@ -1,12 +1,11 @@
-from flask import Flask, render_template, request
-from tensorflow.keras.models import load_model
-import cv2
+import streamlit as st
 import numpy as np
+import cv2
+from tensorflow.keras.models import load_model
 import os
 
-app = Flask(__name__)
-
-model_path = os.path.join(os.path.dirname(__file__), "models", "CNN.h5")
+# Load model
+model_path = os.path.join("models", "CNN.h5")
 model = load_model(model_path)
 
 classes = {
@@ -14,49 +13,29 @@ classes = {
     1: "Uninfected"
 }
 
-@app.route("/")
-def home():
-    return render_template("index.html")
+# UI
+st.title("🦠 Malaria Detection System")
+st.write("Upload a cell image to detect infection")
 
-@app.route("/form")
-def form():
-    return render_template("form.html")
+uploaded_file = st.file_uploader("Choose an image", type=["jpg", "png", "jpeg"])
 
-@app.route("/predict", methods=["POST"])
-def predict():
+if uploaded_file is not None:
 
-    if "image" not in request.files:
-        return "No image uploaded"
+    # Convert file to numpy array
+    file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
+    img = cv2.imdecode(file_bytes, 1)
 
-    file = request.files["image"]
+    st.image(img, caption="Uploaded Image", use_container_width=True)
 
-    if file.filename == "":
-        return "No file selected"
+    # Preprocess
+    img_resized = cv2.resize(img, (50, 50))
+    img_array = img_resized.reshape(1, 50, 50, 3)
+    img_array = img_array / 255.0
 
-    os.makedirs("uploads", exist_ok=True)
-
-    filepath = os.path.join("uploads", file.filename)
-    file.save(filepath)
-
-    img = cv2.imread(filepath)
-
-    if img is None:
-        return "Invalid image"
-
-    img = cv2.resize(img, (50, 50))
-    img = img.reshape(-1, 50, 50, 3)
-    img = img / 255.0
-
-    pred = model.predict(img, verbose=0)
-
+    # Prediction
+    pred = model.predict(img_array)
     index = int(np.argmax(pred[0]))
+    result = classes[index]
 
-    prediction = classes[index]
-
-    return render_template(
-        "result.html",
-        prediction=prediction
-    )
-
-if __name__ == "__main__":
-    app.run(debug=True)
+    st.subheader("Prediction Result:")
+    st.success(result)
