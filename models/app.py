@@ -1,12 +1,13 @@
 from flask import Flask, render_template, request
-from keras.models import load_model
+from tensorflow.keras.models import load_model
 import cv2
 import numpy as np
 import os
 
 app = Flask(__name__)
 
-model = load_model("models/CNN.h5")
+model_path = os.path.join(os.path.dirname(__file__), "models", "CNN.h5")
+model = load_model(model_path)
 
 classes = {
     0: "Parasitized",
@@ -48,7 +49,7 @@ def predict():
 
     pred = model.predict(img, verbose=0)
 
-    index = np.argmax(pred)
+    index = int(np.argmax(pred[0]))
 
     prediction = classes[index]
 
@@ -58,4 +59,4 @@ def predict():
     )
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
