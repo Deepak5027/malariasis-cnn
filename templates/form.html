@@ -30,7 +30,8 @@
                id="fileInput"
                name="image"
                accept="image/*"
-               style="display:none;">
+               style="display:none;"
+               required>
 
         <!-- Select Image Button -->
         <button type="button"
@@ -41,15 +42,18 @@
 
         <br><br>
 
-        <!-- Show Selected File -->
+        <!-- Selected File Name -->
         <p id="fileName"></p>
 
+        <!-- Upload Button -->
         <button type="submit"
                 class="btn btn-primary">
-            Upload
+            Predict
         </button>
 
     </form>
+
+    <br><br>
 
     <img id="asset1"
          src="{{ url_for('static', filename='images/input_page_asset1.png') }}">
