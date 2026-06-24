@@ -6,7 +6,7 @@ import os
 
 app = Flask(__name__)
 
-model = load_model("models/cnn.h5")
+model = load_model("models/CNN.h5")
 
 classes = {
     0: "Parasitized",
