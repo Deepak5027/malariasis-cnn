@@ -1,27 +1,46 @@
+from flask import Flask, render_template, request
+from keras.models import load_model
 import cv2
 import numpy as np
-from keras.models import load_model
-import tkinter as tk 
-from tkinter import filedialog 
-from tkinter import messagebox
+import os
 
+app = Flask(__name__)
 
-model = load_model('CNN.h5')
+model = load_model("models/cnn.h5")
 
-classes={0:'Parasitized',1:'Uninfected'}
+classes = {
+    0: "Parasitized",
+    1: "Uninfected"
+}
 
-def predict(path):   #Method for predicting whether the image is of parasitized cell or an uninfected cell
-    img=cv2.imread(path)
+@app.route("/")
+def home():
+    return render_template("index.html")
+
+@app.route("/form")
+def form():
+    return render_template("form.html")
+
+@app.route("/predict", methods=["POST"])
+def predict():
+    file = request.files["image"]
+
+    os.makedirs("uploads", exist_ok=True)
+
+    filepath = os.path.join("uploads", file.filename)
+    file.save(filepath)
+
+    img = cv2.imread(filepath)
     img = cv2.resize(img, (50,50))
     img = img.reshape(-1,50,50,3)
-    img = img/255.0
-    prd = model.predict(img)
-    certainty=(np.amax(prd)*100)
-    index = prd.argmax()    #Selecting Best Estimate
-    messagebox.showinfo("Result", "This cell is {} with {}% certainty.".format(classes[index],certainty))
-print('Please Enter The Image Of The Cell To Be Diagnosed: ',end='')
+    img = img / 255.0
 
-root = tk.Tk() 
-root.withdraw() 
-file_path = filedialog.askopenfilename() 
-predict(file_path)
+    pred = model.predict(img)
+    index = pred.argmax()
+
+    result = classes[index]
+
+    return render_template("result.html", result=result)
+
+if __name__ == "__main__":
+    app.run(debug=True)
