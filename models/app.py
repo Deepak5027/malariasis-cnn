@@ -23,7 +23,14 @@ def form():
 
 @app.route("/predict", methods=["POST"])
 def predict():
+
+    if "image" not in request.files:
+        return "No image uploaded"
+
     file = request.files["image"]
+
+    if file.filename == "":
+        return "No file selected"
 
     os.makedirs("uploads", exist_ok=True)
 
@@ -31,16 +38,24 @@ def predict():
     file.save(filepath)
 
     img = cv2.imread(filepath)
-    img = cv2.resize(img, (50,50))
-    img = img.reshape(-1,50,50,3)
+
+    if img is None:
+        return "Invalid image"
+
+    img = cv2.resize(img, (50, 50))
+    img = img.reshape(-1, 50, 50, 3)
     img = img / 255.0
 
-    pred = model.predict(img)
-    index = pred.argmax()
+    pred = model.predict(img, verbose=0)
 
-    result = classes[index]
+    index = np.argmax(pred)
 
-    return render_template("result.html", result=result)
+    prediction = classes[index]
+
+    return render_template(
+        "result.html",
+        prediction=prediction
+    )
 
 if __name__ == "__main__":
     app.run(debug=True)
